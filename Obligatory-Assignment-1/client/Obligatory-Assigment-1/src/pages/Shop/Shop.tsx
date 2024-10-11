@@ -89,7 +89,7 @@ const ShopCard = React.memo(({ product, initialQuantity, onAdd, onRemove, imageS
                 </div>
                 <div className="card-actions justify-between items-center mt-auto">
                     <button onClick={handleAddClick} className="btn bg-green-500 mr-2">+</button>
-                    <InputFieldPaperQuantity item={{ quantity, product_id: product.id, price: product.price, name: product.name }} stock={product.stock} />
+                    <InputFieldPaperQuantity item={{ quantity, product_id: product.id, price: product.price, name: product.name, selectedProperty: selectedProperty  }} stock={product.stock} />
                     <button onClick={handleRemoveClick} className="btn bg-red-500 ml-2" disabled={quantity === 0}>-</button>
                 </div>
                 <div className="flex justify-center">
@@ -150,6 +150,7 @@ function Shop() {
         const fetchData = async () => {
             try {
                 const response = await MyApi.api.paperGetAllPapers();
+                // @ts-expect-error: Ignore an error there don't exist
                 setProducts(response.data);
             } catch (error) {
                 console.error("Error fetching products:", error);

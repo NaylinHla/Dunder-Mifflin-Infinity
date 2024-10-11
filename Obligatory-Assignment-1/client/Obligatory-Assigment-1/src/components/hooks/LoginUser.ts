@@ -50,6 +50,16 @@ export const useLogin = () => {
 
             return true; // Indicate success
         } catch (error) {
+            if (error.response.status === 404) { // Means we not found a user in DB
+                const clearedCustomerData = {
+                    id: 0,
+                    address: '',
+                    email,
+                    name: '',
+                    phone: '',
+                };
+                updateCustomerData(clearedCustomerData);
+            }
             console.error("Error fetching customer data:", error);
             return true; // Indicate success at the moment we don't handle this
         } finally {

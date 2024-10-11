@@ -15,8 +15,17 @@ interface ProfileFormErrors {
     phone?: string;
 }
 
+// Define the structure of the customer state
+interface CustomerState {
+    id: number;
+    address: string;
+    email: string;
+    name: string;
+    phone: string;
+}
+
 // Initial customer state
-const initialCustomerState = {
+const initialCustomerState: CustomerState = {
     id: 0,
     address: '',
     email: '',
@@ -113,9 +122,21 @@ function MyProfile() {
 
             // Show success notification
             toast.success("Profile changes saved successfully!");
-        } catch (error) {
-            toast.error("Error saving profile changes. Please try again.");
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                if (typeof error === "object" && "response" in error) {
+                    const errResponse = (error as { response?: { status?: number } }).response;
+                    if (errResponse && errResponse.status === 409) {
+                        toast.error("This email already exists. Please use a different email.");
+                    } else {
+                        toast.error("Error saving profile changes. Please try again.");
+                    }
+                } else {
+                    toast.error("An unexpected error occurred.");
+                }
+            }
         }
+
         setEditableProfile(false);
     };
 

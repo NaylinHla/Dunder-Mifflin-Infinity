@@ -1,6 +1,6 @@
 # Dunder Mifflin Infinity
 
-![alt text](image.png)
+![alt text](image-7.png)
 
 
 ## Description
@@ -41,6 +41,15 @@ Thomas O [GitHub](https://github.com/Yatokuri/)<br />
 * 0.3
     * Beta Release
 
+# Config:
+(Change the name of "config.example.env" to "config.env" and paste in this data)
+
+POSTGRES_USER=dmiuser<br />
+POSTGRES_PASSWORD=dmipass<br />
+POSTGRES_DB=dmidb<br />
+JWT_KEY=b1zQ7aX3q3FgR1jJ4R1wF4tR1rT2jT4gF3kZ5fF6kR1aL9sT3qE5hJ4yP7tR4w<br />
+JWT_ISSUER=http://localhost:5173/<br />
+JWT_AUDIENCE=http://localhost:5261/<br />
 
 ## License
 

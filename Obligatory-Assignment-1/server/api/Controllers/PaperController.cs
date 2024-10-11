@@ -83,7 +83,7 @@ public class PaperController(DMIContext context) : ControllerBase
     [Authorize(Roles = "Admin")]
     [HttpPut]
     [Route("api/paper/{id}")]
-    public ActionResult<Paper> UpdatePaper(int id, EditPaperDto paper)
+    public ActionResult<Paper> UpdatePaper(int id, [FromBody] EditPaperDto paper)
     {
         var validator = new UpdatePaperValidator();
         ValidationResult results = validator.Validate(paper);
