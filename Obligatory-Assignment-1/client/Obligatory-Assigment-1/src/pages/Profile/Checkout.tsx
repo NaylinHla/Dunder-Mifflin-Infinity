@@ -84,7 +84,7 @@ const CheckoutPage = () => {
         validateAllFields(touchedFields); // Pass touchedFields to validation
     }, [touchedFields, customer, paymentDetails]);
 
-    if (basket.length == 0) { //Handle case where user go basket using change browser url
+    if (basket.length == 0 && currentStep !== 5) { //Handle case where user go basket using change browser url
         navigate(`/shop`);
     }
 
