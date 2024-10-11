@@ -1,13 +1,15 @@
 // CheckoutPage.tsx
 import { useAtom } from 'jotai';
 import { BasketAtom, TotalAmountAtom } from '../../atoms/BasketAtoms.ts'; // Corrected path
-import {clearCustomerData, CustomerAtoms, setCustomerData} from '../../atoms/CustomerAtoms.ts'; // Corrected path
+import {clearCustomerData, CustomerAtoms, setCustomerData, useCustomerData} from '../../atoms/CustomerAtoms.ts'; // Corrected path
 import { authAtom, clearAuthData, loginFormAtom } from "../../atoms/LoginAtoms.ts"; // Import the auth atom
 import { ShippingAtom, SelectedShippingOptionAtom } from '../../atoms/ShippingAtom.ts'; // Import shipping atoms
 import { useState, useEffect } from 'react';
 import OrderPlacementComponent from "../../components/Orders/PlaceOrder.tsx";
 import React from 'react';
 import {useLogin} from "../../components/hooks/LoginUser.ts";
+import {toast} from "react-hot-toast";
+import { useNavigate } from 'react-router-dom';
 
 const CheckoutPage = () => {
     const [customer, setCustomer] = useAtom(CustomerAtoms);
@@ -18,8 +20,10 @@ const CheckoutPage = () => {
     const [shippingOptions] = useAtom(ShippingAtom); // Use shipping options atom
     const [selectedShippingOption, setSelectedShippingOption] = useAtom(SelectedShippingOptionAtom); // Use selected shipping option atom
     const { loginUser } = useLogin(); // Use the custom login hook
+    const { updateCustomerData } = useCustomerData();
+    const navigate = useNavigate(); // Create navigate instance
 
-    const [touchedFields, setTouchedFields] = useState({
+    const initialTouchedFields = {
         email: false,
         password: false,
         name: false,
@@ -28,8 +32,20 @@ const CheckoutPage = () => {
         cardNumber: false,
         expirationDate: false,
         cvv: false,
-    });
+    };
 
+    const [touchedFields, setTouchedFields] = useState(initialTouchedFields);;
+
+    const initialErrorState = {
+        email: '',
+        password: '',
+        name: '',
+        address: '',
+        phoneNumber: '',
+        cardNumber: '',
+        expirationDate: '',
+        cvv: '',
+    };
 
     // Local state for payment details
     const [paymentDetails, setPaymentDetails] = useState({
@@ -51,19 +67,11 @@ const CheckoutPage = () => {
     const [currentStep, setCurrentStep] = useState(1);
 
     // Validation states
-    const [errors, setErrors] = useState({
-        email: '',
-        password: '',
-        name: '',
-        address: '',
-        phoneNumber: '',
-        cardNumber: '',
-        expirationDate: '',
-        cvv: '',
-    });
+    const [errors, setErrors] = useState(initialErrorState);
 
     // Automatically set current step to 2 if customer data exists
     useEffect(() => {
+
         if (authState.isLoggedIn) { // Check if user is logged in
             setCurrentStep(2);
         } else {
@@ -76,6 +84,10 @@ const CheckoutPage = () => {
         validateAllFields(touchedFields); // Pass touchedFields to validation
     }, [touchedFields, customer, paymentDetails]);
 
+    if (basket.length == 0 && currentStep !== 5) { //Handle case where user go basket using change browser url
+        navigate(`/shop`);
+    }
+
     // Validate all steps
     const validateAllFields = (touchedFields: { [key: string]: boolean }) => {
         const newErrors = { ...errors };
@@ -87,8 +99,12 @@ const CheckoutPage = () => {
             } else {
                 newErrors.email = '';
             }
-            if (touchedFields.password && !fakePassword.password) {
-                newErrors.password = 'Password is required';
+            if (!authState.isLoggedIn)   {
+                if (touchedFields.password && !fakePassword.password) {
+                    newErrors.password = 'Password is required';
+                } else {
+                    newErrors.password = '';
+                }
             } else {
                 newErrors.password = '';
             }
@@ -141,13 +157,19 @@ const CheckoutPage = () => {
         // Prepare new touched fields
         const newTouchedFields = { ...touchedFields }; // Start with the previous state
 
+        if (authState.isLoggedIn && currentStep === 1)   {
+            setCurrentStep(currentStep + 1); // Handle special case
+        }
+
         // Mark all fields as touched for the current step
         if (currentStep === 1) {
             newTouchedFields.email = true;
             newTouchedFields.password = true;
             // Validate fields before trying to log in
             if (validateAllFields(newTouchedFields)) {
-                loginUser(customer.email).then();
+                if (!authState.isLoggedIn)   {
+                    loginUser(customer.email).then();
+                }
             }
         } else if (currentStep === 2) {
             newTouchedFields.name = true;
@@ -160,6 +182,9 @@ const CheckoutPage = () => {
         }
         setTouchedFields(newTouchedFields);
         if (validateAllFields(newTouchedFields)) {
+            if (currentStep === 2) {
+                updateCustomerData(customer);
+            }
             setCurrentStep(currentStep + 1); // Move to the next step if valid
         }
     };
@@ -168,11 +193,18 @@ const CheckoutPage = () => {
         setCurrentStep(currentStep - 1);
     };
 
-    const handleLogout = () => {
-        clearAuthData(); // Clear authentication data from localStorage
-        clearCustomerData(setCustomerData); // -||-
-        setAuthState({ email: '', isLoggedIn: false }); // Set user as logged out
-        setLoginForm({ email: '', password: '' }); // Reset login form state
+    const handleLogout = () =>  {
+        if (authState.isLoggedIn)  {
+            clearAuthData(); // Clear authentication data from localStorage
+            clearCustomerData(setCustomerData); // -||-
+            setAuthState({ email: '', isLoggedIn: false }); // Set user as logged out
+            setLoginForm({ email: '', password: '' }); // Reset login form state
+            setErrors(initialErrorState); // Clear all error messages
+            setTouchedFields(initialTouchedFields);
+            toast.success("You have logged out successfully.");
+        } else {
+            toast.error("You are not logged in.", { duration: 2000 }); // Show error message if already logged out
+        }
     }
 
     const handleOrderSuccess = (orderId: string, deliveryDate: string, totalAmount: number) => {
@@ -226,6 +258,7 @@ const CheckoutPage = () => {
                                     setTouchedFields((prev) => ({ ...prev, email: true }));
                                 }}
                                 placeholder="john.doe@example.com"
+                                disabled={authState.isLoggedIn}
                                 className={`input input-bordered w-full ${errors.email ? 'border-red-500' : ''}`}
                             />
                             <div className="h-2">
@@ -243,6 +276,7 @@ const CheckoutPage = () => {
                                     setFakePassword({ ...fakePassword, password });
                                     setTouchedFields((prev) => ({ ...prev, password: true }));
                                 }}
+                                disabled={authState.isLoggedIn}
                             />
                             <div className="h-2">
                                 {errors.password && <div className="text-red-500 text-sm">{errors.password}</div>}
