@@ -13,7 +13,7 @@ function Space() {
                         All profits go to space
                     </h1>
                     <p className="card-title text-lg sm:text-xl font-bold">
-                        At Dunder Mifflin, we're not just paper pushers—we're future space explorers!
+                        At Dunder Mifflin Infinity, we're not just paper pushers—we're future space explorers!
                         🚀 Every ream you buy brings us one step closer to the stars. Sure,
                         we could focus on "business growth" or "market shares,"
                         but why settle for that when we can dream of intergalactic offices?

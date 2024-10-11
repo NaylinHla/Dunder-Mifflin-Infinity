@@ -13,7 +13,7 @@ function Chinese() {
                         Made by Chinese children
                     </h1>
                     <p className="card-title text-lg sm:text-xl font-bold">
-                        At Dunder Mifflin, we take pride in producing the finest paper—crafted with care by some of the most dedicated hands around!
+                        At Dunder Mifflin Infinity, we take pride in producing the finest paper—crafted with care by some of the most dedicated hands around!
                         Sure, some might call them kids, but we call them efficiency experts.
                         Why waste time on things like school or play when you can help fuel the paper industry?
                         With the natural sunlight streaming through our well-ventilated factories (those cracks really do the trick),
