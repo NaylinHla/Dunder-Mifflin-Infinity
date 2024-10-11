@@ -9,6 +9,7 @@ type InputFieldPaperQuantityProps = {
         product_id: number;
         price: number;
         name: string;
+        selectedProperty?: string;
     };
     stock: number;
 };
@@ -58,7 +59,8 @@ function InputFieldPaperQuantity({ item, stock}: InputFieldPaperQuantityProps) {
             setBasket(basket.filter(item => item.product_id !== productId));
             toast.success("Product removed from basket");
         } else if (quantity <= stock) {
-            updateQuantity(basket, productId, quantity, item.price, item.name,"N/A", setBasket);
+            const selectedProperty = item.selectedProperty || "N/A";
+            updateQuantity(basket, productId, quantity, item.price, item.name, selectedProperty, setBasket);
         }
     };
 

@@ -1,4 +1,5 @@
 import { atom } from 'jotai';
+import {clearCustomerData, setCustomerData} from "./CustomerAtoms.ts";
 
 // Define types for the authentication state
 interface AuthState {
@@ -28,7 +29,24 @@ const initialAuthState: AuthState = {
 export const setAuthData = (data: AuthState) => {
     const expirationTime = new Date().getTime() + 60 * 60 * 1000; // 1 hour in milliseconds
     localStorage.setItem('authData', JSON.stringify({ ...data, expirationTime }));
+    startExpirationCheck(); // Start the expiration check
     return data; // Return the updated state to tell relevant site there is now logged out
+};
+
+// Function to start checking the expiration periodically
+const startExpirationCheck = () => {
+    const checkInterval = setInterval(() => {
+        const storedAuthData = localStorage.getItem('authData');
+        if (storedAuthData) {
+            const { expirationTime } = JSON.parse(storedAuthData);
+            // Check if the current time is greater than the expiration time
+            if (new Date().getTime() > expirationTime) {
+                clearInterval(checkInterval); // Stop checking if already expired
+                clearAuthData(); // Log out the user
+                console.log("Session expired, user logged out."); // You might want to handle UI updates here
+            }
+        }
+    }, 60000); // Check every minute (60,000 ms)
 };
 
 // Function to get authentication data from localStorage
@@ -39,7 +57,7 @@ const getAuthData = (): AuthState | null => {
         if (new Date().getTime() < expirationTime) {
             return { email, isLoggedIn };
         } else {
-            localStorage.removeItem('authData');
+            clearAuthData(); // Logout the user immediately if expired
         }
     }
     return null;
@@ -49,6 +67,7 @@ const getAuthData = (): AuthState | null => {
 export const clearAuthData = () => {
     localStorage.removeItem('authData'); // Clear authentication data
     localStorage.removeItem('token'); // Clear token
+    clearCustomerData(setCustomerData);
     return initialAuthState; // Return initial state
 };
 

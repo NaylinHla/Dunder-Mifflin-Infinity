@@ -32,7 +32,7 @@ function ProductTable() {
                 console.error("Error fetching products:", error);
             }
         };
-        fetchData();
+        fetchData().then();
     }, [setProducts]);
 
     const handleEdit = (productId: string) => {
@@ -41,7 +41,7 @@ function ProductTable() {
 
     const handleSave = async (updatedProduct: Product) => {
         try {
-            await MyApi.api.paperUpdatePaper(updatedProduct.id, updatedProduct, getAPIA);
+            await MyApi.api.paperUpdatePaper(updatedProduct.id, updatedProduct, getAPIA());
             setProducts(products.map(product =>
                 product.id === updatedProduct.id ? updatedProduct : product
             ));

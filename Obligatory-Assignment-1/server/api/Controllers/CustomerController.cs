@@ -166,6 +166,13 @@ public class CustomerController(DMIContext context) : ControllerBase
             return Forbid(); // Return 403 if unauthorized
         }
 
+        // Check if the new email already exists for a different customer
+        var existingCustomerWithEmail = context.Customers.FirstOrDefault(x => x.Email == customer.Email && x.Id != id);
+        if (existingCustomerWithEmail != null)
+        {
+            return Conflict(new { message = "Email already exists for another customer." }); // Return 409 Conflict
+        }
+
         // Update the customer entity with the new values
         customerEntity.Name = customer.Name;
         customerEntity.Address = customer.Address;

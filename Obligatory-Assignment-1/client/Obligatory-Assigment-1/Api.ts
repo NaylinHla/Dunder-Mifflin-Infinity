@@ -166,6 +166,24 @@ export interface EditOrderEntryDto {
   quantity?: number;
 }
 
+export interface CreatePaperDto {
+  name?: string;
+  /** @format int32 */
+  stock?: number;
+  /** @format double */
+  price?: number;
+}
+
+export interface EditPaperDto {
+  /** @format int32 */
+  id?: number;
+  name?: string;
+  /** @format int32 */
+  stock?: number;
+  /** @format double */
+  price?: number;
+}
+
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, HeadersDefaults, ResponseType } from "axios";
 import axios from "axios";
 
@@ -496,12 +514,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Order
      * @name OrderUpdateOrder
      * @request PUT:/api/order/{id}
+     * @secure
      */
     orderUpdateOrder: (id: number, data: OrderRequestDto, params: RequestParams = {}) =>
       this.request<OrderDto, any>({
         path: `/api/order/${id}`,
         method: "PUT",
         body: data,
+        secure: true,
         type: ContentType.Json,
         format: "json",
         ...params,
@@ -513,11 +533,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Order
      * @name OrderDeleteOrder
      * @request DELETE:/api/order/{id}
+     * @secure
      */
     orderDeleteOrder: (id: number, params: RequestParams = {}) =>
       this.request<File, any>({
         path: `/api/order/${id}`,
         method: "DELETE",
+        secure: true,
         ...params,
       }),
 
@@ -527,12 +549,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Order
      * @name OrderUpdateOrderStatus
      * @request PUT:/api/order/{id}/status
+     * @secure
      */
     orderUpdateOrderStatus: (id: number, data: string, params: RequestParams = {}) =>
       this.request<File, any>({
         path: `/api/order/${id}/status`,
         method: "PUT",
         body: data,
+        secure: true,
         type: ContentType.Json,
         ...params,
       }),
@@ -543,11 +567,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Order
      * @name OrderCancelOrder
      * @request PUT:/api/order/cancel/{id}
+     * @secure
      */
     orderCancelOrder: (id: number, params: RequestParams = {}) =>
       this.request<File, any>({
         path: `/api/order/cancel/${id}`,
         method: "PUT",
+        secure: true,
         ...params,
       }),
 
@@ -659,21 +685,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/api/paper
      * @secure
      */
-    paperCreatePaper: (
-      query?: {
-        name?: string;
-        /** @format int32 */
-        stock?: number;
-        /** @format int32 */
-        price?: number;
-      },
-      params: RequestParams = {},
-    ) =>
+    paperCreatePaper: (data: CreatePaperDto, params: RequestParams = {}) =>
       this.request<Paper, any>({
         path: `/api/paper`,
         method: "POST",
-        query: query,
+        body: data,
         secure: true,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),
@@ -720,24 +738,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request PUT:/api/paper/{id}
      * @secure
      */
-    paperUpdatePaper: (
-      id: number,
-      query?: {
-        /** @format int32 */
-        id?: number;
-        name?: string;
-        /** @format int32 */
-        stock?: number;
-        /** @format int32 */
-        price?: number;
-      },
-      params: RequestParams = {},
-    ) =>
+    paperUpdatePaper: (id: number, data: EditPaperDto, params: RequestParams = {}) =>
       this.request<Paper, any>({
         path: `/api/paper/${id}`,
         method: "PUT",
-        query: query,
+        body: data,
         secure: true,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),
