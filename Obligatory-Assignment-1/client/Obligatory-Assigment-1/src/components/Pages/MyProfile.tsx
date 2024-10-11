@@ -27,7 +27,12 @@ const initialCustomerState = {
 function MyProfile() {
     const [toggleEditableProfile, setEditableProfile] = useState(false);
     const [customer, setCustomer] = useAtom(CustomerAtoms);
-    const [touchedFields, setTouchedFields] = useState({
+    const [touchedFields, setTouchedFields] = useState<{
+        name: boolean;
+        email: boolean;
+        address: boolean;
+        phone: boolean;
+    }>({
         name: false,
         email: false,
         address: false,
@@ -89,7 +94,15 @@ function MyProfile() {
 
     const saveProfileChanges = async () => {
         // Validate the form before saving
-        if (!validateForm(state, touchedFields)) return; // Stop if validation fails
+        const updatedTouchedFields = {
+            name: true, email: true, address: true, phone: true,
+        };
+        setTouchedFields(updatedTouchedFields);
+
+        if (!validateForm(state, updatedTouchedFields)) {
+            toast.error("Please complete all required fields to proceed.");
+            return;
+        }
 
         try {
             await MyApi.api.customerUpdateCustomer(customer.id, state, getAPIA());

@@ -61,7 +61,7 @@ public class PaperController(DMIContext context) : ControllerBase
     [Authorize(Roles = "Admin")]
     [HttpPost]
     [Route("api/paper")]
-    public ActionResult<Paper> CreatePaper(CreatePaperDto paper)
+    public ActionResult<Paper> CreatePaper([FromBody] CreatePaperDto paper)
     {
         var validator = new CreatePaperValidator();
         ValidationResult results = validator.Validate(paper);
