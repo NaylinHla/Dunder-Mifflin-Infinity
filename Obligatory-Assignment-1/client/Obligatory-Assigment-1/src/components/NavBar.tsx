@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAtom } from 'jotai';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom'; // Import useLocation
 import logo from '../assets/LogoDMI.png';
 import AccountIcon from '../assets/icons/AccountIcon';
 import BasketIcon from '../assets/icons/BasketIcon';
 import BurgerMenuIcon from '../assets/icons/BurgerMenuIcon';
 import { searchAtom } from "../atoms/atoms.ts";
 import {loginFormAtom, authAtom, clearAuthData, checkAdminStatus} from '../atoms/LoginAtoms.ts'; // Importing the atoms
-import { clearCustomerData  } from '../atoms/CustomerAtoms.ts'; // Importing the atoms
+import {clearCustomerData, setCustomerData} from '../atoms/CustomerAtoms.ts'; // Importing the atoms
 import { LoginModal } from './Modals/LoginModal.tsx';
 import { toast} from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
@@ -122,6 +122,7 @@ const NavBar: React.FC = () => {
     const [authState, setAuthState] = useAtom(authAtom); // Get authAtom state
     const [, setLoginForm] = useAtom(loginFormAtom); // Get loginFormAtom state
     const navigate = useNavigate(); // Create navigate instance
+    const location = useLocation(); // Get current location
 
     const handleLogin = () => {
         setLoginModalOpen(true); // Show login modal
@@ -133,7 +134,7 @@ const NavBar: React.FC = () => {
 
     const handleLogout = () => {
         clearAuthData(); // Clear authentication data from localStorage
-        clearCustomerData(); // -||-
+        clearCustomerData(setCustomerData); // -||-
         setAuthState({ email: '', isLoggedIn: false }); // Set user as logged out
         setLoginForm({ email: '', password: '' }); // Reset login form state
         toast.success("You have logged out successfully!", {duration: 3000,});
@@ -173,6 +174,17 @@ const NavBar: React.FC = () => {
         };
     }, []);
 
+    // Function to handle navigation to shop
+    const navigateToShop = () => {
+        const currentPath = location.pathname; // Get current path
+
+        if (currentPath.startsWith('/shop') || currentPath.startsWith('/myOrders') || currentPath.startsWith('/admin/allOrders')) {
+            return;
+        }
+
+        // If not on excluded paths, navigate to shop
+        navigate('/shop');
+    };
 
     return (
         <nav className="navbar h-20 bg-base-100 shadow-lg fixed top-0 w-full z-50">
@@ -213,7 +225,10 @@ const NavBar: React.FC = () => {
                         placeholder="Search"
                         className="input input-bordered w-full"
                         value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
+                        onChange={(e) => {
+                            setSearchValue(e.target.value); // Update search value
+                            navigateToShop(); // Check navigation conditions
+                        }}
                     />
                 </div>
 

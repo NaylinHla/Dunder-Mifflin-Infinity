@@ -194,7 +194,7 @@ function Shop() {
                     ))}
                 </select>
             </div>
-            <div className="card-list grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-10">
+            <div className="card-list grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-5 mx-2 mt-10">
                 {filteredProducts.filter(product => !product.discontinued && product.stock > 0).map((product, index) => (
                     <ShopCard
                         key={product.id}

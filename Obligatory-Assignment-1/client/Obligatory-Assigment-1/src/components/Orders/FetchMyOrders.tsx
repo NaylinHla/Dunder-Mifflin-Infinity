@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import {orderStatusAtom} from "../../atoms/OrderStatusAtoms.ts";
 import {searchAtom} from "../../atoms/atoms.ts";
 import {orderAtom} from "../../atoms/OrderEntryAtoms.ts";
+import GetAPIA from "../Utils/getAPIA.ts";
 
 
 export const MyApi = new Api();
@@ -30,7 +31,7 @@ function AddOrder() {
     useEffect(() => {
         setLoading(true); // Set loading to true when fetching starts
         // Fetch orders for the specific customer
-        MyApi.api.customerGetOrdersByCustomerId(customer.id)
+        MyApi.api.customerGetOrdersByCustomerId(customer.id, GetAPIA())
             .then((ordersResponse) => {
                     // @ts-expect-error: Ignore an error if it doesn't exist
                     setOrders(ordersResponse.data);

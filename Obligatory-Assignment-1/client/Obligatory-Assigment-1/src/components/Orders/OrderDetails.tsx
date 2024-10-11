@@ -110,7 +110,8 @@ function OrderDetails({ isAdmin }: OrderDetailsProps) {
 
     const confirmCancelOrder = () => {
         if (!order) return;
-        cancelOrder(order.id).then();
+        cancelOrder(order.id).then(() => {setOrder((prevOrder) =>
+                prevOrder ? { ...prevOrder, status: 'Cancelled' } : null);}); //Change status on screen direct
         refreshOrderDetails(); // Refresh order details
         setModalOpen(false); // Close modal
     };

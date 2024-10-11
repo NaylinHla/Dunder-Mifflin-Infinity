@@ -1,17 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAtom } from 'jotai';
-import {loginFormAtom, authAtom, setAuthData, isAdmin} from '../../atoms/LoginAtoms';
-import { clearCustomerData, CustomerAtoms, useCustomerData } from '../../atoms/CustomerAtoms';
+import {loginFormAtom, authAtom} from '../../atoms/LoginAtoms';
+import {clearCustomerData, CustomerAtoms, setCustomerData} from '../../atoms/CustomerAtoms';
 import EyeOnIcon from "../../assets/icons/EyeOnIcon.tsx";
 import EyeOffIcon from '../../assets/icons/EyeOffIcon.tsx';
 import FacebookLogo from '../../assets/icons/FacebookIcon.tsx';
 import GoogleLogo from '../../assets/icons/GoogleIcon.tsx';
 import logo from '../../assets/LogoDMI.png';
-import toast from "react-hot-toast";
 import useDataWithExpirationCheck from "../hooks/CheckDataWithExpirationCheck";
-import {Api} from "../../../Api.ts";
-import getAPIA from "../Utils/getAPIA.ts";
-
+import {useLogin} from "../hooks/LoginUser.ts";
 
 
 // Define the structure of the auth form state
@@ -44,9 +41,6 @@ interface CustomerState {
     phone: string;
 }
 
-
-export const MyApi = new Api();
-
 export function LoginModal({ onConfirm, onCancel }: LoginFormProps) {
     const [authForm, setAuthForm] = useAtom(loginFormAtom);
     const [, setCustomer] = useAtom(CustomerAtoms);
@@ -55,8 +49,7 @@ export function LoginModal({ onConfirm, onCancel }: LoginFormProps) {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false); // State for password visibility
     const [touchedFields, setTouchedFields] = useState({ email: false, password: false }); // Track touched fields
     const modalRef = useRef<HTMLDivElement>(null); // Ref for the modal
-
-    const { updateCustomerData } = useCustomerData(); // Access the custom hook
+    const { loginUser } = useLogin(); // Use the custom login hook
 
     // Using the custom hook to get auth and customer data
     const storedAuthData = useDataWithExpirationCheck<AuthState>('authData');
@@ -65,7 +58,7 @@ export function LoginModal({ onConfirm, onCancel }: LoginFormProps) {
     useEffect(() => {
         // Clear form fields when the component mounts
         setAuthForm({ email: '', password: '' });
-        clearCustomerData(); // Reset to default values
+        clearCustomerData(setCustomerData); // Reset to default values
 
         // Load customer data from the custom hook if available
         if (storedCustomerData) {setCustomer(storedCustomerData);} // If data is valid, update the atom state
@@ -114,43 +107,10 @@ export function LoginModal({ onConfirm, onCancel }: LoginFormProps) {
         };
 
         if (validateForm(authForm, updatedTouchedFields)) {
-            // Save user login state without the password in authAtom
-            const authData = {
-                email: authForm.email,
-                isLoggedIn: true,
-            };
-
-            const userRoleType = isAdmin(authForm.email) ? 'Admin' : 'User';
-            const loginResponse = await MyApi.api.authLogin({
-                email: authForm.email,
-                roleType: userRoleType, // Ensure the password is included
-            });
-            // @ts-expect-error: Ignore an error there don't exist
-            localStorage.setItem('token', loginResponse.data.token);
-
-            // Save to localStorage and update the atom
-            setAuthData(authData); // Save auth data with expiration
-            setAuth(authData);
-
-            // Fetch customer data based on the email using MyApi
-            try {
-                const response = await MyApi.api.customerGetCustomerByEmail(authForm.email, getAPIA());
-
-                if (response) {
-                    // @ts-expect-error: Ignore an error if it doesn't exist
-                    updateCustomerData(response.data);
-                } else {
-                    //At the moment we ignore should tell to create a new one?
-                }
-            } catch (error) {
-                console.error("Error fetching customer data:", error);
-            } finally {
-                toast.success("You have logged in successfully!", {duration: 3000});
-                onConfirm();
-
-                if (onConfirm) {
-                    onConfirm(); // Close the modal after successful login
-                }
+            // Call the login function from the custom hook
+            const success = await loginUser(authForm.email);
+            if (success) {
+                onConfirm(); // Close the modal after successful login
             }
         }
     };
@@ -158,12 +118,12 @@ export function LoginModal({ onConfirm, onCancel }: LoginFormProps) {
     // Mockup functions for social login buttons
     const handleGoogleLogin = () => {
         console.log('Login with Google');
-        handleSubmit();
-    };
+        handleSubmit().then();
+    }
 
     const handleFacebookLogin = () => {
         console.log('Login with Facebook');
-        handleSubmit();
+        handleSubmit().then();
     };
 
     // Function to toggle password visibility

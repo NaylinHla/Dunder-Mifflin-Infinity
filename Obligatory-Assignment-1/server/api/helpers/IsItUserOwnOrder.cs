@@ -1,35 +1,20 @@
 ﻿using System.Security.Claims;
-using dataAccess; // Ensure this is your actual namespace for the DbContext
-using Microsoft.EntityFrameworkCore; // Required for Include and EF Core methods
+using dataAccess;
 
-namespace api.helpers // Replace with your actual namespace
+
+namespace api.helpers 
 {
-    public class AuthorizationHelper
+    public static class AuthorizationHelper
     {
-        private readonly DMIContext _context; // Your actual DbContext
-        private readonly ClaimsPrincipal _user;
-
-        public AuthorizationHelper(DMIContext context, ClaimsPrincipal user)
-        {
-            _context = context;
-            _user = user;
-        }
-
-        public bool IsUserOwnOrder(int orderId)
+        public static bool IsUserAuthorizedForEntity(DMIContext context, ClaimsPrincipal user, int entityId, string roleName)
         {
             // Get the user ID from claims
-            var userId = _user.FindFirstValue("UserId");
+            var userId = user.FindFirstValue("UserId");
+            var isAdmin = user.IsInRole(roleName); // Check if the user is in the specified role
 
-            // Check if the user is an admin
-            var isAdmin = _user.IsInRole("Admin");
-
-            // Retrieve the order entity
-            var orderEntity = _context.Orders
-                .Include(o => o.Customer) // Eager load the Customer property
-                .FirstOrDefault(o => o.Id == orderId);
-
-            // Check if the order exists and if the user is the owner
-            var isOwner = orderEntity?.Customer != null && orderEntity.Customer.Id.ToString() == userId;
+            // Check if the entity exists and if the user is the owner
+            var entity = context.Customers.FirstOrDefault(e => e.Id == entityId);
+            var isOwner = entity != null && entity.Id.ToString() == userId;
 
             return isAdmin || isOwner;
         }

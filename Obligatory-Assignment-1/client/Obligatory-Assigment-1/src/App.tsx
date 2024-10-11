@@ -1,6 +1,6 @@
 import './App.css';
 import Home from './pages/Home/Home.tsx';
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import NotFound from "./pages/Errors/NotFound.tsx";
 import NewOrderTest from "./pages/NewOrderTest.tsx";
 import NavBar from "./components/NavBar.tsx";
@@ -27,14 +27,23 @@ import Rainbow from "./pages/CardPages/Rainbow/Rainbow.tsx";
 import Chinese from "./pages/CardPages/Chinese/Chinese.tsx";
 import Space from "./pages/CardPages/Space/Space.tsx";
 import Productivity from "./pages/CardPages/Productivity/Productivity.tsx";
+import { useSetAtom } from 'jotai';
+import { searchAtom } from './atoms/atoms.ts';
+import React from "react";
 
 function App() {
+    const setSearch = useSetAtom(searchAtom);
+
     return (
         <div className="flex flex-col min-h-screen bg-gray-100">
             <BrowserRouter>
                 <Toaster/>
                 <NavBar/>
                 <div className="flex-grow pt-20">
+
+                    {/* Use useEffect and useLocation after BrowserRouter */}
+                    <LocationListener setSearch={setSearch} />
+
                     <Routes>
                         {/* Protecting admin routes with a wildcard route */}
                         <Route path="/admin/*" element={
@@ -77,6 +86,19 @@ function App() {
             </BrowserRouter>
         </div>
     );
+}
+
+// Helper component to handle location-based logic
+function LocationListener({ setSearch }: { setSearch: (value: string) => void }) {
+    const location = useLocation();
+
+    React.useEffect(() => { // Only clear the search value if the user is not on the "/shop" page
+        if (location.pathname !== '/shop') {
+            setSearch('');
+        }
+    }, [location, setSearch]);
+
+    return null; // This component does not render anything
 }
 
 export default App;

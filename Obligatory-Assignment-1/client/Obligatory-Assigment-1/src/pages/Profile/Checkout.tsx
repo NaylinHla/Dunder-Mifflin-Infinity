@@ -1,12 +1,13 @@
 // CheckoutPage.tsx
 import { useAtom } from 'jotai';
 import { BasketAtom, TotalAmountAtom } from '../../atoms/BasketAtoms.ts'; // Corrected path
-import { clearCustomerData, CustomerAtoms } from '../../atoms/CustomerAtoms.ts'; // Corrected path
+import {clearCustomerData, CustomerAtoms, setCustomerData} from '../../atoms/CustomerAtoms.ts'; // Corrected path
 import { authAtom, clearAuthData, loginFormAtom } from "../../atoms/LoginAtoms.ts"; // Import the auth atom
 import { ShippingAtom, SelectedShippingOptionAtom } from '../../atoms/ShippingAtom.ts'; // Import shipping atoms
 import { useState, useEffect } from 'react';
 import OrderPlacementComponent from "../../components/Orders/PlaceOrder.tsx";
 import React from 'react';
+import {useLogin} from "../../components/hooks/LoginUser.ts";
 
 const CheckoutPage = () => {
     const [customer, setCustomer] = useAtom(CustomerAtoms);
@@ -16,6 +17,7 @@ const CheckoutPage = () => {
     const [, setLoginForm] = useAtom(loginFormAtom); // Get loginFormAtom state
     const [shippingOptions] = useAtom(ShippingAtom); // Use shipping options atom
     const [selectedShippingOption, setSelectedShippingOption] = useAtom(SelectedShippingOptionAtom); // Use selected shipping option atom
+    const { loginUser } = useLogin(); // Use the custom login hook
 
     const [touchedFields, setTouchedFields] = useState({
         email: false,
@@ -143,6 +145,10 @@ const CheckoutPage = () => {
         if (currentStep === 1) {
             newTouchedFields.email = true;
             newTouchedFields.password = true;
+            // Validate fields before trying to log in
+            if (validateAllFields(newTouchedFields)) {
+                loginUser(customer.email).then();
+            }
         } else if (currentStep === 2) {
             newTouchedFields.name = true;
             newTouchedFields.address = true;
@@ -164,7 +170,7 @@ const CheckoutPage = () => {
 
     const handleLogout = () => {
         clearAuthData(); // Clear authentication data from localStorage
-        clearCustomerData(); // -||-
+        clearCustomerData(setCustomerData); // -||-
         setAuthState({ email: '', isLoggedIn: false }); // Set user as logged out
         setLoginForm({ email: '', password: '' }); // Reset login form state
     }
@@ -202,12 +208,6 @@ const CheckoutPage = () => {
                     </React.Fragment>
                 ))}
             </div>
-
-
-
-
-
-
 
             {/* Step 1: Log In */}
             {currentStep === 1 && (

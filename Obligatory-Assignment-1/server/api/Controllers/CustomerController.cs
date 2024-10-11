@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+﻿using api.helpers;
 using dataAccess;
 using dataAccess.Models;
 using FluentValidation.Results;
@@ -27,9 +27,6 @@ public class CustomerController(DMIContext context) : ControllerBase
     [Route("api/customer/{id}")]
     public ActionResult GetCustomerById(int id)
     {
-        // Get the user ID from claims (assuming the UserId claim is set during authentication)
-        var userId = User.FindFirstValue("UserId");
-    
         // Fetch the customer record from the database
         var customer = context.Customers.FirstOrDefault(x => x.Id == id);
 
@@ -38,11 +35,8 @@ public class CustomerController(DMIContext context) : ControllerBase
             return NotFound(); // Return 404 if customer not found
         }
 
-        // Check if the user is an admin or the owner of the customer record
-        var isAdmin = User.IsInRole("Admin");
-        var isOwner = customer.Id.ToString() == userId;
-
-        if (!isAdmin && !isOwner)
+        // Use the static helper method for authorization check
+        if (!AuthorizationHelper.IsUserAuthorizedForEntity(context, User, id, "Admin"))
         {
             return Forbid(); // Return 403 Forbidden if the user is not authorized
         }
@@ -55,9 +49,6 @@ public class CustomerController(DMIContext context) : ControllerBase
     [Route("api/customer/email/{email}")]
     public ActionResult GetCustomerByEmail(string email)
     {
-        // Get the user ID from claims (assuming the UserId claim is set during authentication)
-        var userId = User.FindFirstValue("UserId");
-    
         // Fetch the customer record by email
         var customer = context.Customers.FirstOrDefault(x => x.Email == email);
 
@@ -66,11 +57,8 @@ public class CustomerController(DMIContext context) : ControllerBase
             return NotFound(); // Return 404 if customer not found
         }
 
-        // Check if the user is an admin or the owner of the customer record
-        var isAdmin = User.IsInRole("Admin");
-        var isOwner = customer.Id.ToString() == userId;
-
-        if (!isAdmin && !isOwner)
+        // Check if the user is authorized
+        if (!AuthorizationHelper.IsUserAuthorizedForEntity(context, User, customer.Id, "Admin"))
         {
             return Forbid(); // Return 403 Forbidden if the user is not authorized
         }
@@ -82,6 +70,21 @@ public class CustomerController(DMIContext context) : ControllerBase
     [HttpGet("api/customer/{id}/order")]
     public ActionResult<IEnumerable<OrderDto>> GetOrdersByCustomerId(int id)
     {
+        // Fetch the customer record from the database
+        var customer = context.Customers.FirstOrDefault(x => x.Id == id);
+
+        if (customer == null)
+        {
+            return NotFound(); // Return 404 if customer not found
+        }
+
+        // Check if the user is authorized to access the customer's orders
+        if (!AuthorizationHelper.IsUserAuthorizedForEntity(context, User, customer.Id, "Admin"))
+        {
+            return Forbid(); // Return 403 Forbidden if the user is not authorized
+        }
+
+        // Retrieve all orders associated with the customer
         var orders = context.Orders
             .Include(o => o.OrderEntries)
             .ThenInclude(oe => oe.Product)
@@ -157,15 +160,8 @@ public class CustomerController(DMIContext context) : ControllerBase
             return NotFound(); // Return 404 if the customer is not found
         }
 
-        // Get the current user's ID from the claims (assuming UserId is stored in claims during authentication)
-        var userId = User.FindFirstValue("UserId");
-
-        // Check if the user is an admin or the owner of the customer account
-        var isAdmin = User.IsInRole("Admin");
-        var isOwner = customerEntity.Id.ToString() == userId;
-
-        // If the user is neither an admin nor the owner, return a 403 Forbidden response
-        if (!isAdmin && !isOwner)
+        // Check if the user is authorized
+        if (!AuthorizationHelper.IsUserAuthorizedForEntity(context, User, id, "Admin"))
         {
             return Forbid(); // Return 403 if unauthorized
         }
@@ -197,14 +193,8 @@ public class CustomerController(DMIContext context) : ControllerBase
             return NotFound(); // Return 404 if customer is not found
         }
 
-        // Get the current user's ID from claims (set during authentication)
-        var userId = User.FindFirstValue("UserId");
-
-        // Check if the user is an admin or the owner of the customer record
-        var isAdmin = User.IsInRole("Admin");
-        var isOwner = customerEntity.Id.ToString() == userId;
-
-        if (!isAdmin && !isOwner)
+        // Check if the user is authorized
+        if (!AuthorizationHelper.IsUserAuthorizedForEntity(context, User, id, "Admin"))
         {
             return Forbid(); // Return 403 Forbidden if the user is not authorized
         }
