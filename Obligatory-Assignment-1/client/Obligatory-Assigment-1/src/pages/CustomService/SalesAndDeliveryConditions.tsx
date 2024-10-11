@@ -1,4 +1,4 @@
-import PageHeader from "../../components/PageHeader.tsx";
+import PageHeader from "../../components/PageHelpers/PageHeader.tsx";
 import { Link } from "react-router-dom";
 
 function SalesAndDeliveryConditions() {

@@ -5,7 +5,7 @@ namespace service.Request.OrderDto;
 
 public class OrderRequestDto
 {
-    public CreateCustomerDto Customer { get; set; }  // Customer details
-    public CreateOrderDto Order { get; set; }        // Order details
-    public List<CreateOrderEntryDto> OrderEntries { get; set; }
+    public CreateCustomerDto Customer { get; set; } = null!; // Customer details
+    public CreateOrderDto Order { get; set; } = null!; // Order details
+    public List<CreateOrderEntryDto> OrderEntries { get; set; } = null!;
 }

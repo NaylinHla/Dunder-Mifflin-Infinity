@@ -3,6 +3,7 @@ import { Api } from "../../../../../Api.ts";
 import { useAtom } from 'jotai';
 import { productsAtom } from '../ProductTable/ProductTable.tsx';
 import './AddProduct.css';
+import getAPIA from "../../../../components/Utils/getAPIA.ts";
 
 export const MyApi = new Api();
 
@@ -11,7 +12,7 @@ async function createPaper(name: string, stock: number, price: number) {
         name: name,
         stock: stock,
         price: price
-    });
+    ,},getAPIA());
     return response.data;
 }
 

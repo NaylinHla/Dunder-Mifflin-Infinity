@@ -1,22 +1,31 @@
 import {useAtom} from "jotai";
 import {Link} from "react-router-dom";
 import {useEffect, useState} from "react";
-import {MyApi} from "./Shop.tsx";
-import {BasketAtom, TotalAmountAtom, clearBasket, updateQuantity, loadBasketFromStorage} from "../../atoms/BasketAtoms.ts";
+import {BasketAtom, TotalAmountAtom, clearBasket, loadBasketFromStorage} from "../../atoms/BasketAtoms.ts";
 import {toast} from "react-hot-toast";
 import TrashIcon from '../../assets/icons/TrashbinIcon.tsx';
-import ConfirmationModal from '../../components/ConfirmationModal.tsx';
-
-type ProductNames = {
-    [key: number]: string; // Maps product IDs to product names
-};
+import ConfirmationModal from '../../components/Modals/ConfirmationModal.tsx';
+import InputFieldPaperQuantity from '../../components/Orders/InputFieldPaperQuantity.tsx';
+import {MyApi} from "./Shop.tsx";
 
 // Utility function to format price
 const formatPrice = (price: number) => {
+    if (price >= 1e9) return `$${(price / 1e9).toFixed(1)}B`; // = Billion
     if (price >= 1e6) return `$${(price / 1e6).toFixed(1)}M`; // = Million
     if (price >= 1e3) return `$${(price / 1e3).toFixed(1)}K`; // = Thousand
     return `$${price.toFixed(2)}`; // Regular price
 };
+
+// Interface for stock items
+interface StockItem {
+    id: number;
+    stock: number;
+}
+
+// Define the expected API response structure
+interface ApiResponse {
+    data: StockItem[];
+}
 
 // Utility function to truncate long names
 const truncateString = (str: string, maxLength: number) => {
@@ -26,63 +35,61 @@ const truncateString = (str: string, maxLength: number) => {
 function Basket() {
     const [basket, setBasket] = useAtom(BasketAtom);
     const [totalAmount] = useAtom(TotalAmountAtom);
-    const [productNames, setProductNames] = useState<ProductNames>({});
     const [isModalOpen, setModalOpen] = useState(false);
-    const [inputValues, setInputValues] = useState<string[]>([]);
+    const [maxNameLength, setMaxNameLength] = useState(18);
+    const [products, setProducts] = useState<{ [key: number]: { stock: number } }>({});
 
     // Load basket from local storage once when the component mounts
     useEffect(() => {
         loadBasketFromStorage(setBasket);
     }, [setBasket]);
 
-    // Fetch product names when the page starts - Might take a quick second since names are not saved in the basket atom
     useEffect(() => {
-        const fetchProductNames = async () => {
-            const names = {};
-            for (const item of basket) {
-                try {
-                    const response = await MyApi.api.paperGetPaper(item.product_id);
-                    // @ts-expect-error: Ignore an error if it doesn't exist
-                    names[item.product_id] = response.data.name;
-                } catch (error) {
-                    console.error(`Error fetching product ${item.product_id}:`, error);
-                }
+        // Load basket from local storage on component mount
+        loadBasketFromStorage(setBasket);
+    }, [setBasket]);
+
+    useEffect(() => {
+        const fetchAllStocks = async () => {
+            const productIds = basket.map(item => item.product_id);
+            if (productIds.length === 0) return; // Skip API call if no product IDs are in the basket
+
+            try {
+                const response = await MyApi.api.paperGetStocksByIDs({productIds: productIds.join(',')}) as unknown as ApiResponse;
+
+                // Construct stock data from API response
+                const stockData = response.data.reduce<Record<number, { stock: number }>>(
+                    (acc, item) => {
+                        if (item.id && item.stock) {
+                            acc[item.id] = { stock: item.stock }; // Map product IDs to stock values
+                        }
+                        return acc;
+                    }, {}
+                );
+
+                setProducts(stockData); // Update state with stock data
+
+            } catch (error) {
+                console.error("Error fetching product stocks:", error);
             }
-            setProductNames(names);
+        };
+        fetchAllStocks().then();
+    }, [basket, setProducts]); // Re-run when basket or setProducts changes
+
+    // Track screen size and adjust max length dynamically
+    useEffect(() => {
+        const updateMaxNameLength = () => {
+            const screenWidth = window.innerWidth;
+            setMaxNameLength(screenWidth >= 640 ? 18 : 19);
         };
 
-        fetchProductNames();
-    }, [basket]);
+        updateMaxNameLength();
+        // Listen for window resize and update max name length
+        window.addEventListener("resize", updateMaxNameLength);
 
-    useEffect(() => {
-        // Initialize inputValues array based on the basket's current state
-        setInputValues(basket.map(item => item.quantity.toString())); // Start with quantities as strings
-    }, [basket]);
+        return () => window.removeEventListener("resize", updateMaxNameLength);
+    }, []);
 
-    const handleQuantityChange = (index: number, newQuantity: string, price: number) => {
-        // Immediately update the input value
-        setInputValues(prev => {
-            const updatedInputValues = [...prev];
-            updatedInputValues[index] = newQuantity;
-            return updatedInputValues;
-        });
-
-        // Exit early if the input is empty
-        if (newQuantity === '') return;
-
-        // Parse the new quantity
-        const quantity = parseInt(newQuantity, 10);
-        const productId = basket[index].product_id;
-
-        // Update the basket based on the new quantity
-        if (quantity === 0) {
-            updateQuantity(basket, productId, 0, price, setBasket);
-            setBasket(basket.filter(item => item.product_id !== productId)); // Remove product if quantity is 0
-            toast.success("Product removed from basket");
-        } else {
-            updateQuantity(basket, productId, quantity, price, setBasket);
-        }
-    };
 
     // Handle clearing the basket with a confirmation dialog
     const handleClearBasket = () => {
@@ -97,40 +104,54 @@ function Basket() {
     };
 
     return (
-        <div className="shopping-basket p-6 max-w-md mx-auto bg-white rounded-xl shadow-md space-y-4">
+        <div className="shopping-basket p-6 max-w-lg mx-auto bg-white rounded-xl shadow-md mt-2 space-y-4">
             <h2 className="text-2xl font-bold text-center">Your Shopping Cart</h2>
             {basket.length > 0 ? (
                 <div>
                     <ul className="space-y-2">
-                        {basket.map((item, index) => (
-                            <li key={item.product_id} className="flex justify-between items-center py-2 border-b">
-                                <div className="w-2/5">
-                                    <span
-                                        className="font-semibold overflow-hidden whitespace-nowrap text-ellipsis"
-                                        title={productNames[item.product_id] || 'Loading...'}
-                                    >
-                                    {truncateString(productNames[item.product_id] || 'Loading...', 18)}
-                                </span>
-                                </div>
-                                <div className="flex w-3/5 justify-between items-center">
-                                    <input
-                                        type="number"
-                                        className="w-16 text-center border rounded"
-                                        value={inputValues[index] !== undefined ? inputValues[index] : item.quantity}
-                                        onChange={(e) => {
-                                            const numericValue = parseInt(e.target.value, 10);
-                                            if (e.target.value === '' || !isNaN(numericValue) && numericValue >= 0 && numericValue <= 9999) {
-                                                handleQuantityChange(index, numericValue.toString(), item.price);
-                                            }
-                                        }}
-                                        min={0}
-                                        max={9999}
-                                    />
-                                    <span className="w-1/4 text-center">Price: {formatPrice(item.price)}</span>
-                                    <span className="w-1/4 text-center">Total: {formatPrice(item.quantity * item.price)}</span>
-                                </div>
-                            </li>
-                        ))}
+                        {basket.map((item) => {
+                            const stock = products[item.product_id]?.stock || 0; // Use the fetched stock data
+                            return (
+                                <li key={item.product_id} className="border-b py-2">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex-shrink-0 w-1/2 max-w-[260px]">
+                                            <span
+                                                className="font-semibold overflow-hidden whitespace-nowrap text-ellipsis mr-2"
+                                                title={item.name}
+                                            >
+                                                {truncateString(item.name || 'Unknown', maxNameLength)}
+                                            </span>
+                                            <span
+                                                className="font-semibold overflow-hidden whitespace-nowrap text-ellipsis "
+                                                title={item.selectedProperty}
+                                            >
+                                            ({truncateString( item.selectedProperty || 'White', maxNameLength)})
+                                        </span>
+                                        </div>
+                                        <div className="sm:flex-grow sm:w-1/4 ml-1 justify-items-end">
+                                            <InputFieldPaperQuantity item={item} stock={stock} />
+                                        </div>
+                                        <div className="w-1/4 text-center flex-col hidden sm:flex">
+                                            <span>Price:</span>
+                                            <span>{formatPrice(item.price)}</span>
+                                        </div>
+                                        <div className="w-1/4 text-center flex-col hidden sm:flex">
+                                            <span>Total:</span>
+                                            <span>{formatPrice(item.quantity * item.price)}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-between items-center sm:hidden mt-2">
+                                        <span className="w-1/2 text-left">
+                                            Price: {formatPrice(item.price)}
+                                        </span>
+                                        <span className="w-1/2 text-right">
+                                            Total: {formatPrice(item.quantity * item.price)}
+                                        </span>
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ul>
                     <div className="mt-4 flex justify-between font-bold">
                         <span>Total Amount:</span>
@@ -145,7 +166,6 @@ function Basket() {
                         </button>
                     </div>
 
-                    {/* Confirmation Modal */}
                     <ConfirmationModal
                         isOpen={isModalOpen}
                         onClose={() => setModalOpen(false)}

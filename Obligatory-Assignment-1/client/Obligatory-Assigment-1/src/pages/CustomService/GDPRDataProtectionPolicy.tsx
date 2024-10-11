@@ -1,4 +1,4 @@
-import PageHeader from "../../components/PageHeader.tsx";
+import PageHeader from "../../components/PageHelpers/PageHeader.tsx";
 
 function GDPRDataProtectionPolicy() {
     return (

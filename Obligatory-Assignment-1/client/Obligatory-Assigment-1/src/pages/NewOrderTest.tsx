@@ -23,6 +23,7 @@ type BasketItem = {
     product_id: number;
     quantity: number;
     price: number;
+    name: string;
 };
 
 
@@ -126,13 +127,14 @@ const NewOrderTest = () => {
             product_id: entry.productId,
             quantity: entry.quantity,
             price: entry.price, // Add the price here
+            name: "N/A", // Add the price here
         };
         addToBasket(basket, newEntry, setBasket);
     };
 
     // Update quantity using the atom's method
     const handleUpdateQuantity = (entry: OrderEntry) => {
-        updateQuantity(basket, entry.productId, entry.quantity, entry.price, setBasket);
+        updateQuantity(basket, entry.productId, entry.quantity, entry.price, "N/A","N/A", setBasket);
     };
 
     const calculateOrderEntriesTotal = () => {

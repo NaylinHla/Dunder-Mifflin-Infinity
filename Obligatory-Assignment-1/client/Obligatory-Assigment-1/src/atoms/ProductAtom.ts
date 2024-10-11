@@ -6,6 +6,7 @@ export interface Product {
     name: string;
     stock: number;
     price: number;
+    properties: string[];
     discontinued: boolean;
 }
 

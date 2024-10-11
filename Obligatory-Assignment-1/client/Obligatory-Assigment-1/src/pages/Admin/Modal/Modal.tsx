@@ -1,13 +1,7 @@
-import { ReactNode } from 'react';
+import React from 'react';
 import './Modal.css';
 
-interface ModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    children: ReactNode;
-}
-
-function Modal({ isOpen, onClose, children }: ModalProps) {
+function Modal({ isOpen, onClose, children }: { isOpen: boolean, onClose: () => void, children: React.ReactNode }) {
     if (!isOpen) return null;
 
     return (

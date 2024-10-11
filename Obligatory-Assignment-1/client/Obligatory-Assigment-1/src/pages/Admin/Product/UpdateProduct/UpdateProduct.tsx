@@ -13,7 +13,8 @@ function UpdateProduct({ product, onSave }: UpdateProductProps) {
     const [price, setPrice] = useState(product.price);
 
     const handleSave = () => {
-        onSave({ ...product, name, stock, price });
+        const updatedProduct = { ...product, name, stock, price };
+        onSave(updatedProduct);
     };
 
     return (

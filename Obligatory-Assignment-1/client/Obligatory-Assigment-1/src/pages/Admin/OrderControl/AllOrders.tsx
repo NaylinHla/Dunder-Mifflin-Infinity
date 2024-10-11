@@ -1,4 +1,4 @@
-import FetchOrders from "../../../components/FetchAllOrders.tsx";
+import FetchOrders from "../../../components/Orders/FetchAllOrders.tsx";
 import {useAtom} from "jotai/index";
 import {authAtom, checkAdminStatus} from "../../../atoms/LoginAtoms.ts";
 import NoPermission from "../../Errors/NoPermission.tsx";
@@ -16,7 +16,7 @@ function AllOrders() {
     return (
       <div>
 
-          <h1 className="text-3xl font-bold">All Orders</h1>
+          <h1 className="text-3xl m-2 font-bold">All Orders</h1>
 
           <FetchOrders />
       </div>

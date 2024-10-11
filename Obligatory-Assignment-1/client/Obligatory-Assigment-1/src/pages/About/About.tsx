@@ -1,4 +1,4 @@
-import AboutUs from "../../components/AboutUs.tsx";
+import AboutUs from "../../components/Pages/AboutUs.tsx";
 
 
 function About() {

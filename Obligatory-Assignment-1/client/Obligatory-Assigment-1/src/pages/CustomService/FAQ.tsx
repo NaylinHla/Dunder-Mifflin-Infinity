@@ -1,5 +1,5 @@
 import { SetStateAction, useState} from "react";
-import PageHeader from "../../components/PageHeader.tsx";
+import PageHeader from "../../components/PageHelpers/PageHeader.tsx";
 
 function FAQ() {
     const [activeIndex, setActiveIndex] = useState(null);

@@ -1,7 +1,10 @@
 ﻿using dataAccess;
 using dataAccess.Models;
+using FluentValidation.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using service.Request;
+using Service.Validators;
 
 namespace api.Controllers;
 
@@ -17,6 +20,34 @@ public class PaperController(DMIContext context) : ControllerBase
     }
     
     [HttpGet]
+    [Route("api/paper/getstocks")]
+    public ActionResult GetStocksByIDs([FromQuery] string productIds)
+    {
+        var validator = new GetStocksByIDsValidator();
+        ValidationResult results = validator.Validate(productIds);
+        if (!results.IsValid)
+        {
+            return BadRequest(results.Errors);
+        }
+        
+        var idList = productIds.Split(',').Select(int.Parse).ToList();
+
+        var result = context.Papers
+            .Where(p => idList.Contains(p.Id))
+            .Select(p => new 
+            {
+                p.Id,
+                p.Stock
+            })
+            .ToList();
+        if (!result.Any())
+        {
+            return NotFound("No stocks found for the specified product IDs.");
+        }
+        return Ok(result);
+    }
+    
+    [HttpGet]
     [Route("api/paper/{id}")]
     public ActionResult GetPaper(int id)
     {
@@ -27,11 +58,18 @@ public class PaperController(DMIContext context) : ControllerBase
         }
         return Ok(result);
     }
-
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [Route("api/paper")]
-    public ActionResult<Paper> CreatePaper(CreatePaperDto paper)
+    public ActionResult<Paper> CreatePaper([FromBody] CreatePaperDto paper)
     {
+        var validator = new CreatePaperValidator();
+        ValidationResult results = validator.Validate(paper);
+        if (!results.IsValid)
+        {
+            return BadRequest(results.Errors);
+        }
+        
         var paperEntity = new Paper()
         {
             Name = paper.name,
@@ -42,11 +80,18 @@ public class PaperController(DMIContext context) : ControllerBase
         context.SaveChanges();
         return Ok(paperEntity);
     }
-    
+    [Authorize(Roles = "Admin")]
     [HttpPut]
     [Route("api/paper/{id}")]
-    public ActionResult<Paper> UpdatePaper(int id, EditPaperDto paper)
+    public ActionResult<Paper> UpdatePaper(int id, [FromBody] EditPaperDto paper)
     {
+        var validator = new UpdatePaperValidator();
+        ValidationResult results = validator.Validate(paper);
+        if (!results.IsValid)
+        {
+            return BadRequest(results.Errors);
+        }
+        
         var paperEntity = context.Papers.FirstOrDefault(p => p.Id == id);
         if (paperEntity == null)
         {
@@ -58,10 +103,10 @@ public class PaperController(DMIContext context) : ControllerBase
         context.SaveChanges();
         return Ok(paperEntity);
     }
-    
+    [Authorize(Roles = "Admin")]
     [HttpPatch]
-    [Route("api/paper/{id}")]
-    public ActionResult<Paper> UpdateDiscontinued(int id, bool discontinued)
+    [Route("api/paper/discontinue/{id}")]
+    public ActionResult<Paper> UpdateDiscontinue(int id, bool discontinued)
     {
         var paperEntity = context.Papers.FirstOrDefault(p => p.Id == id);
         if (paperEntity == null)
@@ -72,7 +117,21 @@ public class PaperController(DMIContext context) : ControllerBase
         context.SaveChanges();
         return Ok(paperEntity);
     }
-    
+    [Authorize(Roles = "Admin")]
+    [HttpPatch]
+    [Route("api/paper/continue/{id}")]
+    public ActionResult<Paper> UpdateContinue(int id)
+    {
+        var paperEntity = context.Papers.FirstOrDefault(p => p.Id == id);
+        if (paperEntity == null)
+        {
+            return NotFound();
+        }
+        paperEntity.Discontinued = false;
+        context.SaveChanges();
+        return Ok(paperEntity);
+    }
+    [Authorize(Roles = "Admin")]    
     [HttpDelete]
     [Route("api/paper/{id}")]
     public ActionResult DeletePaper(int id)
@@ -86,6 +145,4 @@ public class PaperController(DMIContext context) : ControllerBase
         context.SaveChanges();
         return Ok();
     }
-    
 }
-

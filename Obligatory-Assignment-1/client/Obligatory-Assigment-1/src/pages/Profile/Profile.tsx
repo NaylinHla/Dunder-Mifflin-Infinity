@@ -1,4 +1,4 @@
-﻿    import MyProfile from "../../components/MyProfile.tsx";
+﻿    import MyProfile from "../../components/Pages/MyProfile.tsx";
     import { authAtom, checkAdminStatus } from "../../atoms/LoginAtoms.ts";
     import {useAtom} from "jotai/index";
     import NoPermission from "../Errors/NoPermission.tsx";

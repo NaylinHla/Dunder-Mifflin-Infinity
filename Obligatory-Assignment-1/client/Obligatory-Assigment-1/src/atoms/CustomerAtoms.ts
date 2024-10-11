@@ -39,9 +39,9 @@ const getCustomerData = (): CustomerState | null => {
 };
 
 // Clear customer data from localStorage
-export const clearCustomerData = () => {
+export const clearCustomerData = (setCustomerAtom: (data: CustomerState) => void) => {
     localStorage.removeItem('customerData'); // Clear customer data
-    setCustomerData(initialCustomerState); // Reset the atom to initial state
+    setCustomerAtom(initialCustomerState); // Reset the atom state to the initial customer state
 };
 
 // Initialize CustomerAtoms with stored data if available

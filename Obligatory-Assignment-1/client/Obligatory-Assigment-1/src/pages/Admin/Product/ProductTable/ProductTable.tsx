@@ -1,9 +1,10 @@
 import { Api } from "../../../../../Api.ts";
 import { atom, useAtom } from "jotai";
 import { useEffect, useState } from "react";
-import DeleteProduct from "../DeleteProduct/DeleteProduct.tsx";
+import DiscontinueProduct from "../DiscontinueProduct/DiscontinueProduct.tsx";
 import UpdateProduct from "../UpdateProduct/UpdateProduct.tsx";
 import './ProductTable.css';
+import getAPIA from "../../../../components/Utils/getAPIA.ts";
 
 interface Product {
     id: string;
@@ -14,6 +15,7 @@ interface Product {
 }
 
 export const MyApi = new Api();
+
 export const productsAtom = atom<Product[]>([]);
 
 function ProductTable() {
@@ -24,13 +26,13 @@ function ProductTable() {
         const fetchData = async () => {
             try {
                 const response = await MyApi.api.paperGetAllPapers(); // Fetch data
-                // @ts-ignore
+                // @ts-expect-error: Ignore an error there don't exist
                 setProducts(response.data);
             } catch (error) {
                 console.error("Error fetching products:", error);
             }
         };
-        fetchData();
+        fetchData().then();
     }, [setProducts]);
 
     const handleEdit = (productId: string) => {
@@ -38,13 +40,15 @@ function ProductTable() {
     };
 
     const handleSave = async (updatedProduct: Product) => {
-        // Update the product in the backend
-        await MyApi.api.paperUpdatePaper(updatedProduct.id, updatedProduct);
-        // Update the product in the state
-        setProducts(products.map(product =>
-            product.id === updatedProduct.id ? updatedProduct : product
-        ));
-        setIsEditing(null);
+        try {
+            await MyApi.api.paperUpdatePaper(updatedProduct.id, updatedProduct, getAPIA());
+            setProducts(products.map(product =>
+                product.id === updatedProduct.id ? updatedProduct : product
+            ));
+            setIsEditing(null);
+        } catch (error) {
+            console.error("Error updating product:", error);
+        }
     };
 
     return (
@@ -58,7 +62,7 @@ function ProductTable() {
             </tr>
             </thead>
             <tbody>
-            {products.filter(product => !product.discontinued).map((product, index) => (
+            {products.map((product, index) => (
                 <tr key={index}>
                     {isEditing === product.id ? (
                         <UpdateProduct product={product} onSave={handleSave} />
@@ -69,7 +73,7 @@ function ProductTable() {
                             <td className="table-cell-padding">{product.price}</td>
                             <td className="table-cell-padding">
                                 <button className="btn btn-md lg:btn-lg bg-blue-600 text-white hover:bg-blue-700 mr-4" onClick={() => handleEdit(product.id)}>Edit</button>
-                                <DeleteProduct productId={product.id} />
+                                <DiscontinueProduct productId={product.id} discontinued={product.discontinued} />
                             </td>
                         </>
                     )}

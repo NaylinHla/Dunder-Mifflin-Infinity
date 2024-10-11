@@ -1,0 +1,46 @@
+.table-cell-padding {
+    padding: 10px;
+}
+
+.input-field {
+    padding: 5px;
+    font-size: 1rem;
+}
+
+.btn {
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.btn-md {
+    padding: 8px 16px;
+}
+
+.lg\:btn-lg {
+    padding: 12px 24px;
+}
+
+.bg-blue-600 {
+    background-color: #2563eb;
+}
+
+.text-white {
+    color: #ffffff;
+}
+
+.hover\:bg-blue-700:hover {
+    background-color: #1d4ed8;
+}
+
+.transition {
+    transition: all 0.2s;
+}
+
+.duration-200 {
+    transition-duration: 200ms;
+}
+
+.mt-10 {
+    margin-top: 2.5rem;
+}
