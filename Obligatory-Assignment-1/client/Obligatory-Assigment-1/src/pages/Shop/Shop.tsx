@@ -27,7 +27,11 @@ interface Property {
     propertyName: string;
 }
 
-const imageSources = [paper_shop_picture1, paper_shop_picture2, paper_shop_picture3];
+const productImageMap: { [key: string]: string } = {
+    "Standard": paper_shop_picture1,
+    "Deluxe": paper_shop_picture2,
+    "Eco-Friendly": paper_shop_picture3,
+};
 
 
 const ShopCard = React.memo(({ product, initialQuantity, onAdd, onRemove, imageSrc }: ShopCardProps) => {
@@ -106,12 +110,11 @@ const ShopCard = React.memo(({ product, initialQuantity, onAdd, onRemove, imageS
 function Shop() {
     const [products, setProducts] = useAtom(productAtom);
     const [basket, setBasket] = useAtom(BasketAtom);
-    const [searchQuery] = useAtom(searchAtom); // Use the navbar search
+    const [searchQuery] = useAtom(searchAtom);
     const [sortPrice, setSortPrice] = useState<string>("Normal");
     const [priceFilters] = useAtom(productPriceFilterAtom);
     const [propertyFilter] = useAtom(productPropertyFilterAtom);
 
-    // Load basket from localStorage when the component mounts
     useEffect(() => {
         loadBasketFromStorage(setBasket);
     }, [setBasket]);
@@ -124,11 +127,9 @@ function Shop() {
     const handleAdd = (productId: number, newQuantity: number, price: number, name: string, selectedProperty: string) => {
         const existingQuantity = getProductQuantity(productId);
         if (existingQuantity > 0) {
-            // Update quantity and property for an existing product
             updateQuantity(basket, productId, newQuantity, price, name, selectedProperty, setBasket);
             toast.success("Product quantity updated", { duration: 1000 });
         } else {
-            // Add a new product to the basket
             updateQuantity(basket, productId, newQuantity, price, name, selectedProperty, setBasket);
             toast.success("Product added to basket", { duration: 1000 });
         }
@@ -137,9 +138,8 @@ function Shop() {
     const handleRemove = (productId: number, newQuantity: number, price: number, name: string, selectedProperty: string) => {
         const existingQuantity = getProductQuantity(productId);
         if (existingQuantity > 1) {
-            // Decrease quantity if more than 1
             updateQuantity(basket, productId, newQuantity, price, name, selectedProperty, setBasket);
-            toast.error("Product quantity decreased", {duration: 1000});
+            toast.error("Product quantity decreased", { duration: 1000 });
         } else {
             updateQuantity(basket, productId, newQuantity, price, name, selectedProperty, setBasket);
             toast.error("Product removed from basket");
@@ -149,8 +149,7 @@ function Shop() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await MyApi.api.paperGetAllPapers(); // Fetch data
-                // @ts-expect-error: Ignore an error if it doesn't exist
+                const response = await MyApi.api.paperGetAllPapers();
                 setProducts(response.data);
             } catch (error) {
                 console.error("Error fetching products:", error);
@@ -159,26 +158,23 @@ function Shop() {
         fetchData().then();
     }, [setProducts]);
 
-    // Handle filtering Products by properties, price and search query
     const filteredProducts = products.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()); // Search by Product Name
+        const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesPrice = sortPrice === "Normal" || sortPrice === "Ascending" || sortPrice === "Descending" || product.price.toString() === sortPrice;
         if (sortPrice === "Ascending" || sortPrice === "Descending" || sortPrice === "Normal") { return matchesSearch; }
-        // Needs to be changed to check paper_properties when actually implemented - Currently not working
-        const matchesProperty = !propertyFilter
+        const matchesProperty = !propertyFilter;
 
-        return matchesSearch && matchesPrice && matchesProperty; // Combine filters
+        return matchesSearch && matchesPrice && matchesProperty;
     })
         .sort((a, b) => {
             if (sortPrice === "Ascending") return a.price - b.price;
             if (sortPrice === "Descending") return b.price - a.price;
-            return 0; // Normal (no sorting)
+            return 0;
         });
 
     return (
         <div className="text-black">
-            <h1 className="text-2xl sm:text-3xl font-bold bg-center text-center mt-5">Limitless Paper in a Paperless
-                World</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-center text-center mt-5">Limitless Paper in a Paperless World</h1>
             <div className="mb-4">
                 <label htmlFor="sortPrice" className="mr-2 bg-center flex ml-5 sm:mt-0 mt-5">Sort by Price:</label>
                 <select
@@ -195,7 +191,7 @@ function Shop() {
                 </select>
             </div>
             <div className="card-list grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-5 mx-2 mt-10">
-                {filteredProducts.filter(product => !product.discontinued && product.stock > 0).map((product, index) => (
+                {filteredProducts.filter(product => !product.discontinued && product.stock > 0).map((product) => (
                     <ShopCard
                         key={product.id}
                         product={product}
@@ -203,7 +199,7 @@ function Shop() {
                         onAdd={handleAdd}
                         onRemove={handleRemove}
                         stock={product.stock}
-                        imageSrc={imageSources[index % imageSources.length]} // Use imageSrc from array
+                        imageSrc={productImageMap[product.name] || paper_shop_picture1} // Use imageSrc from mapping
                     />
                 ))}
             </div>
