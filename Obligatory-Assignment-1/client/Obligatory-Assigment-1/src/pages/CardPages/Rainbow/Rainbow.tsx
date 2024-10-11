@@ -13,7 +13,7 @@ function Rainbow() {
                         Any color of the rainbow
                     </h1>
                     <p className="card-title text-lg sm:text-xl font-bold">
-                        At Dunder Mifflin, we know that every paper has its place, whether it's white, blue, pink,
+                        At Dunder Mifflin Infinity, we know that every paper has its place, whether it's white, blue, pink,
                         or even that weird neon green. Just like our paper, people come in all colors, too!
                         We're proud to say we support the LGBTQ+ community because, like paper,
                         love comes in all shades—and we believe everyone deserves to write their own story.
